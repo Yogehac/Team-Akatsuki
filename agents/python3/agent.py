@@ -35,54 +35,68 @@ class node:
 
     def add_neibour(self , grid ):
          
-        if self.row > 0 and grid[self.row - 1][self.col].obj_type == '.': #UP
-            self.neibours.append(grid[self.row - 1][self.col])
+        if self.row > 0 and grid[self.id - 15].obj_type == '.': #UP
+            self.neibours.append(grid[self.id - 15])
 
-        if self.row < 14 and grid[self.row + 1][self.col].obj_type == '.': #DOWN
-            self.neibours.append(grid[self.row + 1][self.col])
+        if self.row < 14 and grid[self.id + 15].obj_type == '.': #DOWN
+            self.neibours.append(grid[self.id + 15])
 
-        if self.col > 0 and grid[self.row ][self.col - 1].obj_type == '.': #LEFT
-            self.neibours.append(grid[self.row][self.col - 1])
+        if self.col > 0 and grid[self.id -1].obj_type == '.': #LEFT
+            self.neibours.append(grid[self.id - 1])
         
-        if self.col < 14 and grid[self.row][self.col + 1].obj_type == '.': #RIGHT
-            self.neibours.append(grid[self.row][self.col + 1])
+        if self.col < 14 and grid[self.id + 1].obj_type == '.': #RIGHT
+            self.neibours.append(grid[self.id + 1])
 
 class Gameboard:
 
     def __init__(self): 
 
-        self.grid = [[node(i , j) for j in range(15)] for i in range(15)] #i row , j col
+        self.grid = [] #i row , j col
+        for i in range(15):
+            for j in range(15):
+                self.grid.append(node(i , j))
 
         self.maja = lambda x : [14-x[1] , x[0]] #MAJA FUNCTION i.e is convert col , row to row , col (want to know reason call us :)
 
         self.h = lambda start , end : abs(start.row - end.row) + abs(start.col - end.col) #Herustic function
 
+        self.linear_fucn = lambda l : l[1] + l[0] * 15 
 
     def update_board(self , gameState): #Everytime the board get updated with current values 
 
         self.gameState = gameState 
-        
-        for i in range(15):
-            for j in range(15):
-                self.grid[j][i].obj_type = '.' #MAJA FUNCTION i.e is convert col , row to row , col
+      
+        for i in range(225):
+                self.grid[i].obj_type = '.'
 
         #ENTITIES i.e WOOD , STONE , METAL , BOMB , AMMO , FIRE , POWERUP => w , o , m , b , a , x , bp
         for i in self.gameState['entities']:
-            self.grid[14-i['y']][i['x']].obj_type = i['type'] #MAJA FUNCTION i.e is convert col , row to row , col
+            self.grid[self.linear_fucn(self.maja([i['x'] , i['y']]))].obj_type = i['type']
+        
+        #THE SAME FOR LOOP ABOVE i.e Line 74 here for detatil ref
+        # for i in self.gameState['entities']:
+            # y = [i['x'] , i['y']]
+            # x = self.maja(y)
+            # n = self.linear_fucn(x)
+            # self.grid[n].obj_type = i['type']
 
         # BOTs
         # OPPONENT TEAM => c , e , g 
         # OUR TEAM      => d , f , h 
         for i in 'cdefgh':
-            x = self.maja(self.gameState['unit_state'][i]['coordinates'])
-            self.grid[x[0]][x[1]].obj_type = i
+            self.grid[self.linear_fucn(self.maja(self.gameState['unit_state'][i]['coordinates']))].obj_type = i
+        
+        
+        #THE SAME FOR LOOP ABOVE i.e Line 87 here for detatil ref
+        # for i in 'cdefgh':
+        #     x = self.maja(self.gameState['unit_state'][i]['coordinates'])
+        #     n = self.linear_fucn(x)
+        #     self.grid[n].obj_type = i
 
-
-        for i in range(15):
-            for j in range(15):
-
-                print(self.grid[i][j].obj_type , end=' ')
-            print()
+        for i in range(225):
+            if i % 15 == 0:
+                print()
+            print(self.grid[i].obj_type , end=' ')
 
 
     def take_action(self , came_from , current):
@@ -121,16 +135,19 @@ class Gameboard:
 
     def path_finding(self , unit , end): 
 
-        start_pos = self.maja(self.gameState['unit_state'][unit]['coordinates']) #UNIT postion #if not work remember to remove him from node
+        # start_pos =  #UNIT postion
 
-        self.start = self.grid[start_pos[0]][start_pos[1]]
+        #THE SAME CODE FROM BELOW i.e Line 146 here for detatil ref
+        # start_pos = self.maja(self.gameState['unit_state'][unit]['coordinates']) #UNIT postion
+        # n = self.linear_fucn(start_pos)
+        # self.start = self.grid[n]
 
-        # self.end = self.grid[0][7]
-        self.end = self.grid[end[0]][end[1]]
+        self.start = self.grid[self.linear_fucn(self.maja(self.gameState['unit_state'][unit]['coordinates']))]#UNIT postion
 
-        for i in range(15):
-            for j in range(15):              
-                self.grid[i][j].score_reset()           
+        self.end = self.grid[end]
+
+        for i in range(225):
+                self.grid[i].score_reset()           
 
         self.path = {}
 
@@ -181,8 +198,6 @@ class Agent():
         self._client.set_game_tick_callback(self._on_game_tick)
         self.board = Gameboard()
 
-
-
         loop = asyncio.get_event_loop()
         connection = loop.run_until_complete(self._client.connect())
         tasks = [
@@ -215,20 +230,17 @@ class Agent():
             
             self.board.update_board(self._client._state)       
             
-            ammo = []
+            ammo = None
             bp   = None
 
-            for i in range(15):
-                for j in range(15):
-                    if self.board.grid[i][j].obj_type == 'a':
-                        ammo = [i ,j]
-                        # ammo.append([i ,j])
+            for i in range(225):
+                if self.board.grid[i].obj_type == 'a':
+                    ammo = i
 
-                    if self.board.grid[i][j].obj_type == 'bp':
-                        bp = [i , j]
+                if self.board.grid[i].obj_type == 'bp':
+                    bp = i
 
             if ammo:
-                # for  i in ammo:
                 print("AMMO PRESENT SIR !!! " , ammo)
                 action = self.board.path_finding(unit_id , ammo)
 
@@ -238,9 +250,7 @@ class Agent():
                 action = self.board.path_finding(unit_id , bp)
 
             else:
-                x = random.randint(0 , 14)
-                y = random.randint(0 , 14)
-                end = [x , y]
+                end = random.randint(0 , 225-1)
                 print("END SIR !!! " , end)
 
                 action = self.board.path_finding(unit_id , end)

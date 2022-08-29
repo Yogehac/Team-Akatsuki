@@ -91,9 +91,9 @@ class node:
     def board_reset(self , weight):
         
         self.obj_type = '.' #Type of This node i.e ENTITY type (Refer line : 53)
-        # self.weight = 0.05
-        # self.weight = 0.001
         self.weight = weight
+        
+        self.bg = '.'
         
         self.bombs = None
         self.hp = None
@@ -141,6 +141,8 @@ class Gameboard:
 
         self.weight = 0.1
 
+        # self.hyper
+
         self.myTeam = None
         
         self.maja = lambda x : [14-x[1] , x[0]] #MAJA FUNCTION i.e is convert col , row to row , col (want to know reason call us :)
@@ -148,6 +150,25 @@ class Gameboard:
         self.h = lambda start , end : abs(start.row - end.row) + abs(start.col - end.col) #Herustic function
 
         self.linear_fucn = lambda l : l[1] + l[0] * 15 
+
+    def render(self):
+
+        print()
+
+        for i in range(225):
+            if i % 15 == 0:
+                print()
+            
+            self.grid[i].bg = self.grid[i].obj_type 
+            
+            for j in self.p:
+
+                if self.p[j].id == i:
+                    self.grid[i].bg = j
+         
+            print(self.grid[i].bg , end=' ')
+
+        print()
 
     def update_board(self , gameState): #Everytime the board get updated with current values 
 
@@ -173,10 +194,12 @@ class Gameboard:
             self.grid[l_].obj_type = i['type']
             
             if i['type']   == 'w':
-                self.grid[l_].weight = i['hp']
+                # self.grid[l_].weight = i['hp']
+                self.grid[l_].weight = 10
 
             elif i['type'] == 'o':
-                self.grid[l_].weight = i['hp']
+                # self.grid[l_].weight = i['hp']
+                self.grid[l_].weight = 30
             
             elif i['type'] == 'm':
                 self.grid[l_].weight = float("inf")
@@ -238,21 +261,8 @@ class Gameboard:
             else:
                 self.grid[l_].weight = float("inf")
 
-        print()
-
-        for i in range(225):
-            if i % 15 == 0:
-                print()
-            
-            for j in self.p:
-
-                if self.p[j].id == i:
-                    self.grid[i].obj_type = j
-         
-            print(self.grid[i].obj_type , end=' ')
-
-        print()
-
+        self.render()
+        
     def sort_ammo(self , unit):
         
         prior_list = [self.h(self.p[unit] , i) for i in self.ammos]
@@ -358,16 +368,16 @@ class Gameboard:
         count = 0
         open_set = PriorityQueue()
 
-        open_set.put((count , start))
 
         start.f_score = self.h(start , end)
         start.g_score = 0
 
+        open_set.put((start.f_score , count , start))
         open_set_hash = {start}
 
         while not open_set.empty():
 
-            current = open_set.get()[1]
+            current = open_set.get()[2]
             open_set_hash.remove(current)
 
             current.add_neibour(self.grid) 
@@ -390,7 +400,7 @@ class Gameboard:
                     
                     if neibour not in open_set_hash:
                         count += 1 
-                        open_set.put((count , neibour))
+                        open_set.put((neibour.f_score , count , neibour))
                         open_set_hash.add(neibour)
         
         print("CAN'T REACH" , unit)

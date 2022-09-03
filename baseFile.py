@@ -90,7 +90,7 @@ class node:
 
     def board_reset(self , weight):
         
-        self.obj_type = '.' #Type of This node i.e ENTITY type (Refer line : 53)
+        self.obj_type = '.' #Type of This node i.e ENTITY  type (Refer line : 53)
         self.weight = weight
         
         self.bg = '.'
@@ -145,7 +145,7 @@ class Gameboard:
 
         self.myTeam = None
         
-        self.maja = lambda x : [14-x[1] , x[0]] #MAJA FUNCTION i.e is convert col , row to row , col (want to know reason call us :)
+        self.maja = lambda x : [14-x[1] , x[0]] #MAJA FUNCTION i.e is convert col , row to row , col (want to know reason call us and say oombu :)
 
         self.h = lambda start , end : abs(start.row - end.row) + abs(start.col - end.col) #Herustic function
 
